@@ -78,6 +78,7 @@ class Rect {
 
     resetScale() {
         this.scale = this.baseScale;
+        // change to the next color in the array
         this.colorIx = (this.colorIx + 1) % myColorsHSB.length;
     }
 }
