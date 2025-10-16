@@ -28,13 +28,6 @@ function draw() {
 
 }
 
-// Save a 10-second gif when the user presses the 's' key.
-function keyPressed() {
-  if (key === 's') {
-    saveGif('mySketch', 10);
-  }
-}
-
 class Circle {
     slideSpeed = 4;
     constructor(x, y, sideSpeed, downSpeed, c, d) {

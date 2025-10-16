@@ -1,10 +1,10 @@
-let coneAngle;
-let rotationPerSecond;
-
 let rotation = 0;
 let sketchFrameRate = 60;
 let secondsPerRotation = 12;
 let numCones = 6;
+
+let coneAngle;
+let rotationPerSecond;
 
 let mask1;
 let mask2;
