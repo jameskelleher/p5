@@ -4,47 +4,49 @@ let numCols = 4;
 let numRows = 3;
 let setRandIx = true;
 
-// let rects = [];
 let zones = [];
 let colorIxOffset = 0;
 
-
 function setup() {
     createCanvas(600, 300);
+	
+    background(220);
 
     colorMode(HSB);
     rectMode(CENTER);
     noStroke();
-
+	
     myColorsHSB = colorsHSB.map(c => color(c[0], c[1], c[2]));
+    
 
     for (let x = 0; x < numCols; x++) {
         for (let y = 0; y < numRows; y++) {
             let zoneRects = [];
 
-            let colorIx = 0;
-            if (setRandIx) colorIx = floor(random(myColorsHSB.length));
+            let colorIx = setRandIx ? floor(random(myColorsHSB.length)) : 0;
+
+            let zoneW = width / numCols;
+            let zoneH = height / numRows;
+
+            let rectX = x / numCols * width + zoneW / 2;
+            let rectY = y / numRows * height + zoneH / 2;
 
             for (let i = 0; i < numRects; i++) {
                 let baseScale = (numRects - i - 1) / numRects;
-
-                let zoneW = width / numCols;
-                let zoneH = height / numRows;
-
-                let rectX = x / numCols * width + zoneW / 2;
-                let rectY = y / numRows * height + zoneH / 2;
-
                 zoneRects.push(new Rect(rectX, rectY, (i + colorIx) % myColorsHSB.length, baseScale));
-                
             }
+
             zones.push(zoneRects);
+
+            let startColorIx = colorIx - 1;
+            if (startColorIx == -1) startColorIx = myColorsHSB.length - 1;
+            let startColor = myColorsHSB[startColorIx]
+            fill(startColor);
+            rect(rectX, rectY, width / numCols, height / numRows);
         }
     }
-
-    console.log(zones[0][0]);
-
-    background(myColorsHSB[myColorsHSB.length - 1]);
 }
+
 
 function draw() {
     zones.forEach(zone => zone.forEach(r => r.drawMe()));
