@@ -1,10 +1,13 @@
 {
-  "compilerOptions": {
-    "target": "es6"
-  },
+  "createdAt": "2025-11-25T16:06:22.930",
   "include": [
     "*.js",
     "**/*.js",
-    "/home/james/.vscode-server/extensions/samplavigne.p5-vscode-1.2.16/p5types/global.d.ts"
+    "*.ts",
+    "**/.ts",
+    "common/*.js",
+    "import/*.js",
+    "/home/james/.vscode-server/extensions/peterdickx.live-p5-launcher-1.4.3/p5types/global.d.ts",
+    "/home/james/.vscode-server/extensions/peterdickx.live-p5-launcher-1.4.3/p5types/p5helper.d.ts"
   ]
 }

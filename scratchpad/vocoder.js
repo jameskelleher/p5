@@ -1,27 +1,60 @@
-let carFft, modFft, osc, mix, mic;
+let carFft, modFft, osc, oscBank, mix, mic, octaveBands, room, roomAmp, roomFft;
 let filters = [];
+
+let mv = 0;
+
+function preload() {
+    room = loadSound('media/room.m4a');
+}
 
 function setup() {
     let cnv = createCanvas(400, 400);
     cnv.mousePressed(startVocoder);
 
-    osc = new p5.Oscillator('sawtooth');
-    osc.disconnect();
+    osc = [
+        new p5.Oscillator('square'),
+        new p5.Oscillator('square'),
+        new p5.Oscillator('square'),
+    ]
+    osc[0].freq(110);
+    osc[1].freq(440);
+    osc[2].freq(880);
 
-    mic = new p5.AudioIn();
-    mic.start();
+    // mic = new p5.AudioIn();
+    // mic.start();
 
     mix = new p5.Gain();
     mix.connect();
 
     carFft = new p5.FFT();
     modFft = new p5.FFT();
+    roomFft = new p5.FFT();
+
+    octaveBands = carFft.getOctaveBands(1, 20);
+
+    // modFft.setInput(mic);
+    roomFft.setInput(room);
+
+    oscBank = new p5.Gain();
+    oscBank.disconnect();
+    oscBank.amp(0);
+    osc.forEach(o => {
+        o.disconnect();
+        o.start();
+        o.amp(1);
+        o.connect(oscBank)
+    });
+    // oscBank.setInput(osc);
 
     // Create multiple bandpass filters
-    for (let ix = 0; ix < 2; ix++) {
+    for (let i = 0; i < octaveBands.length; i++) {
         let filter = new p5.BandPass();
         filter.disconnect();
-        osc.connect(filter);
+        filter.freq(octaveBands[i].center);
+        // let bandwidth = octaveBands[i].hi - octaveBands[i].lo;
+        // bandwidth *= .3
+        filter.res(2);
+        oscBank.connect(filter);
         filter.connect(mix);
         filters.push(filter);
     }
@@ -29,50 +62,59 @@ function setup() {
     carFft.setInput(mix);
 
     noStroke();
+
+    room.loop();
+    room.disconnect();
+    roomAmp = new p5.Amplitude();
+    roomAmp.setInput(room);
+
 }
 
 function draw() {
     background(220);
 
-    let freq = map(mouseX, 0, width, 20, 10000);
-    freq = constrain(freq, 0, 22050);
-
-    let filter1 = filters[0];
-    filter1.freq(freq);
-    filter1.res(50);
-
-    let filter2 = filters[1]
-    filter2.freq(freq * 1.5);
-    filter2.res(50);
-
-    // let filter3 = filters[2];
-    // filter3.freq(freq * 2);
-    // filter3.res(50);
-
     let spectrum = carFft.analyze();
-
-    for (let ix = 0; ix < spectrum.length; ix++) {
-        let x = map(ix, 0, spectrum.length, 0, width);
-        let h = -height + map(spectrum[ix], 0, 255, height, 0);
-        rect(x, height, width / spectrum.length, h);
-    }
 
     fill(0, 0, 255);
 
+    for (let i = 0; i < spectrum.length; i++) {
+        let x = map(i, 0, spectrum.length, 0, width);
+        let h = -height + map(spectrum[i], 0, 255, height, 0);
+        rect(x, height, width / spectrum.length, h);
+    }
+
+    roomFft.analyze();
+    let logAvg = roomFft.logAverages(octaveBands);
+
+    fill(255, 0, 0);
+    for (let i = 0; i < logAvg.length; i++) {
+        let filt = filters[i];
+        let gain = map(logAvg[i], 85, 255, 0, 1);
+        gain = constrain(gain, 0, 1);
+        // let gain = map(mouseY, height, 0, 0, 5);
+        filt.amp(gain, 0.02);
+        let x = map(i, 0, logAvg.length, 0, width);
+        let h = -height + map(gain, 0, 1, height, 0);
+        rect(x, height, width / logAvg.length, h);
+    }
+
+
+
     // console.log(mic.getLevel());
-    micLevel = mic.getLevel();
-    let modAmp = map(micLevel, 0.008, 0.015, 0, 1);
+    // micLevel = mic.getLevel();
+    // let modAmp = map(micLevel, 0.008, 0.015, 0, 1);
+
+    let roomLevel = roomAmp.getLevel();
+    let modAmp = map(roomLevel, 0.02, 0.05, 0, 1)
     modAmp = constrain(modAmp, 0, 1);
-    console.log(modAmp);
-    mix.amp(modAmp);
+    // console.log(modAmp);
+    // mix.amp(modAmp);
 }
 
 function startVocoder() {
-    osc.start();
-    osc.amp(1);
-    osc.freq(440);
+    oscBank.amp(1);
 }
 
 function mouseReleased() {
-    osc.amp(0, 0.2);
+    oscBank.amp(0, 0.2);
 }
