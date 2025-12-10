@@ -4,20 +4,26 @@ let vidW, vidH;
 let player1, player2;
 let ball = null;
 
-let paddleW = 15;
-let paddleH = 40;
-let gfxW = 150;
-let paddleLerp = 0.2;
+let paddleW = 20;
+let paddleH = 60;
+let playerZoneWidth = 225;
+let paddleLerp = 0.6;
 let p1Score = 0;
 let p2Score = 0;
 
-let captures = [null, null];
+let faces = [];
+
+let noseEmoji = "👃";
+
+
+let off = 10;
 
 function preload() {
     faceMesh1 = ml5.faceMesh({ maxFaces: 2, flipped: true });
     faceMesh2 = ml5.faceMesh({ maxFaces: 2, flipped: true });
 
     video1 = createCapture(VIDEO);
+    video1.position(0, 0);
     video1.hide();
 
     video2 = createCapture(VIDEO);
@@ -25,10 +31,11 @@ function preload() {
 }
 
 function setup() {
-    let w = 600;
-    let h = 400;
+    let w = 900;
+    let h = 600;
 
-    createCanvas(w, h);
+    let canvas = createCanvas(w, h);
+    canvas.isHidden = false;
 
     faceMesh1.detectStart(video1, (results) => { gotFaces(results, 0); });
     faceMesh2.detectStart(video2, (results) => { gotFaces(results, 1); });
@@ -41,46 +48,74 @@ function setup() {
     ballBtn.position(width + 10, calibrateBtn.y + calibrateBtn.height + 5);
     ballBtn.mousePressed(() => { ball = new Ball(); });
 
-    player1 = new Player(new Face(1), "red", video2, gfxW / 2, height / 2);
-    player2 = new Player(new Face(0), "blue", video1, width - gfxW / 2, height / 2);
+    toggleFullWebcamBtn = createButton("toggle full webcam view");
+    toggleFullWebcamBtn.position(width + 10, ballBtn.y + ballBtn.height + 20);
+    toggleFullWebcamBtn.mousePressed(() => {
+        if (canvas.isHidden) { canvas.show(); video1.hide();}
+        else { canvas.hide(); video1.size(w, h); video1.show(); }
+        canvas.isHidden = !canvas.isHidden;
+    });
+
+    player1 = new Player(new Face(0), "red", video1, playerZoneWidth / 2, height / 2);
+    player2 = new Player(new Face(1), "blue", video2, width - playerZoneWidth / 2, height / 2);
+
+    
 }
 
 function draw() {
-    background(220);
+    background(0);
+
+
+    // let lineCount = 0;
+    // let emojiW = 20;
+    // for (let y = 0; y < height; y += height / 37) {
+    //     let xOffset = lineCount % 2 == 0 ? 0 : off;
+    //     lineCount++;
+    //     for (let x = playerZoneWidth; x < width - playerZoneWidth + emojiW; x += (width - playerZoneWidth * 2) / 15) {
+    //         text(noseEmoji, x + xOffset, y);
+    //     }
+    // }
+
+    push();
+    stroke(255);
+    strokeWeight(3);
+    // drawingContext.setLineDash([height/40, height/40])
+    line(width/2, 0, width/2, height);
+    pop();
+    
 
     push();
     rectMode(CORNER);
-    clip(() => rect(0, 0, gfxW, height));
+    clip(() => rect(0, 0, playerZoneWidth, height));
     player1.draw();
     pop();
 
     push();
     rectMode(CORNER);
-    clip(() => rect(width - gfxW, 0, gfxW, height));
+    clip(() => rect(width - playerZoneWidth, 0, playerZoneWidth, height));
     player2.draw();
     pop();
 
     textAlign(CENTER);
     textSize(48);
-    text(p1Score, width * 2 / 5, height / 8);
-    text(p2Score, width * 3 / 5, height / 8);
+    fill(255);
+    text(p1Score, width / 2 - playerZoneWidth / 2, height / 8);
+    text(p2Score, width / 2 + playerZoneWidth / 2, height / 8);
 
-    if (ball) {
-        if (ball.x > width + ball.d) {
-            p1Score++;
-            ball = null;
-        }
-        else if (ball.x < 0 - ball.d) {
-            p2Score++;
-            ball = null;
-        } else {
-            ball.draw();
-        }
-    }
+
+
+
+    if (ball) ball.draw();
 }
 
-function gotFaces(results, capturesIx) {
-    captures[capturesIx] = results;
+function gotFaces(results, faceIx) {
+    results.sort((a, b) => {
+        if (a.faceOval.centerX < b.faceOval.centerX) {
+            return -1;
+        } else return 1;
+    });
+    let resultIx = min(results.length - 1, faceIx);
+    faces[faceIx] = results[resultIx];
 }
 
 function calibrate() {
@@ -123,8 +158,8 @@ class Player {
         this.lastX = this.noseX;
         this.lastY = this.noseY;
 
-        let xLo = this.centerX - gfxW / 2 + paddleW / 2;
-        let xHi = this.centerX + gfxW / 2 - paddleW / 2;
+        let xLo = this.centerX - playerZoneWidth / 2 + paddleW / 2;
+        let xHi = this.centerX + playerZoneWidth / 2 - paddleW / 2;
         this.noseX = constrain(this.tx + nose.x, xLo, xHi);
         if (this.lastX) this.noseX = lerp(this.lastX, this.noseX, paddleLerp);
 
@@ -157,7 +192,7 @@ class Player {
         this.lastNose = nose;
 
         this.tx = this.centerX - nose.x;
-        this.ty = this.centerY - nose.y - 20;
+        this.ty = this.centerY - nose.y - 40;
     }
 
     isCollidingWith(ball) {
@@ -180,7 +215,7 @@ class Ball {
         this.x = width / 2;
         this.y = height / 2;
         this.xSpeed = random(1) > 0.5 ? random(3, 5) : random(-3, -5);
-        this.ySpeed = 0; // random(-3, 3);
+        this.ySpeed = random(-3, 3);
         this.color = this.xSpeed > 0 ? "red" : "blue";
 
         this.d = 20;
@@ -188,6 +223,18 @@ class Ball {
     }
 
     draw() {
+
+        if (ball.x > width + ball.d) {   
+            p1Score++;
+            ball = null;
+            return;
+        }
+        else if (ball.x < 0 - ball.d) {
+            p2Score++;
+            ball = null;
+            return;
+        }
+
         fill(this.color);
         circle(this.x, this.y, this.d);
 
@@ -230,10 +277,8 @@ class Face {
     }
 
     face() {
-        let faces = captures[this.faceIx];
-        if (faces == null) return null;
-        if (this.faceIx == 1 && faces.length == 1) return faces[0];
         return faces[this.faceIx];
+        
     }
 
     nose() {
