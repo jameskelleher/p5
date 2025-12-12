@@ -14,6 +14,7 @@ let playerZoneWidth = canvasWidth / 5;
 let paddleLerp = 0.4;
 let p1Score = 0;
 let p2Score = 0;
+let debug = true;
 
 let faces = [null, null];
 
@@ -303,6 +304,9 @@ class Ball {
             this.ySpeed *= -1;
         }
 
+        this.checkCollisions(player1);
+        this.checkCollisions(player2);
+
         if (this.color == "blue" && player1.isCollidingWith(this)) {
             this.color = "red";
             this.xSpeed *= -this.xDamp;
@@ -322,6 +326,33 @@ class Ball {
             this.xSpeed = constrain(this.xSpeed + xDelta, 2, 7);
         this.xSpeed = constrain(this.xSpeed + xDelta, -7, 7);
         this.ySpeed = constrain(this.ySpeed + yDelta, -9, 9);
+    }
+
+    checkCollisions(player) {
+        let bounds = {
+            xMin: player.noseX - paddleW / 2,
+            xMax: player.noseX + paddleW / 2,
+            yMin: player.noseY - paddleH / 2,
+            yMax: player.noseY + paddleH / 2,
+        };
+
+        push();
+        strokeWeight(10);
+        line(bounds.xMin, bounds.yMin, bounds.xMin, bounds.yMax);
+        pop();
+
+        if (collideLineCircle(bounds.xMin, bounds.yMin, bounds.xMin, bounds.yMax, this.x, this.y, this.d)) {
+            debugLog(`${player.color} left`);
+        }
+        else if (collideLineCircle(bounds.xMax, bounds.yMin, bounds.xMac, bounds.yMax, this.x, this.y, this.d)) {
+            debugLog(`${player.color} right`);
+        }
+        else if (collideLineCircle(bounds.xMin, bounds.yMin, bounds.xMax, bounds.yMin, this.x, this.y, this.d)) {
+            debugLog(`${player.color} top`);
+        }
+        else if (collideLineCircle(bounds.xMin, bounds.yMax, bounds.xMax, bounds.yMax, this.x, this.y, this.d)) {
+            debugLog(`${player.color} bottom`);
+        }
     }
 }
 
@@ -356,4 +387,8 @@ function identifyKeypoints(offset = 0) {
         let keypoint = face.keypoints[i];
         text(i, keypoint.x + offset, keypoint.y);
     }
+}
+
+function debugLog(msg) {
+    if (debug) console.log(msg);
 }
