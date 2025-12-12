@@ -2,19 +2,22 @@ let video1, video2;
 let faceMesh1, faceMesh2;
 let vidW, vidH;
 let player1, player2;
+let defaultWebcamW, defaultWebcamH, showWebcam;
 let ball = null;
+let sunglasses, sadEyes;
 
-let paddleW = 20;
-let paddleH = 60;
-let playerZoneWidth = 225;
-let paddleLerp = 0.6;
+let paddleW = 70;
+let paddleH = 70;
+let canvasWidth = 800;
+let canvasHeight = 400;
+let playerZoneWidth = canvasWidth / 5;
+let paddleLerp = 0.4;
 let p1Score = 0;
 let p2Score = 0;
 
-let faces = [];
+let faces = [null, null];
 
 let noseEmoji = "👃";
-
 
 let off = 10;
 
@@ -23,35 +26,47 @@ function preload() {
     faceMesh2 = ml5.faceMesh({ maxFaces: 2, flipped: true });
 
     video1 = createCapture(VIDEO);
-    video1.position(0, 0);
     video1.hide();
 
     video2 = createCapture(VIDEO);
     video2.hide();
+
+    sunglasses = loadImage("media/sunglasses.png");
+    sadEyes = loadImage("media/sadAnimeEyes.png");
 }
 
 function setup() {
-    let w = 900;
-    let h = 600;
+    let w = 800;
+    let h = 400;
 
-    let canvas = createCanvas(w, h);
+    let canvas = createCanvas(canvasWidth, canvasHeight);
     canvas.isHidden = false;
+
+    defaultWebcamW = video1.width;
+    defaultWebcamH = video2.height;
+    showWebcam = true;
 
     faceMesh1.detectStart(video1, (results) => { gotFaces(results, 0); });
     faceMesh2.detectStart(video2, (results) => { gotFaces(results, 1); });
 
     calibrateBtn = createButton("calibrate");
-    calibrateBtn.position(width + 10, 0);
+    calibrateBtn.position(10, height + 10);
     calibrateBtn.mousePressed(calibrate);
 
     ballBtn = createButton("new ball");
-    ballBtn.position(width + 10, calibrateBtn.y + calibrateBtn.height + 5);
-    ballBtn.mousePressed(() => { ball = new Ball(); });
+    ballBtn.position(calibrateBtn.x + calibrateBtn.width + 10, height + 10);
+    ballBtn.mousePressed(() => {
+        ball = new Ball();
+        player1.hasSunglasses = false;
+        player1.hasSadEyes = false;
+        player2.hasSunglasses = false;
+        player2.hasSadEyes = false;
+    });
 
     toggleFullWebcamBtn = createButton("toggle full webcam view");
-    toggleFullWebcamBtn.position(width + 10, ballBtn.y + ballBtn.height + 20);
+    toggleFullWebcamBtn.position(ballBtn.x + ballBtn.width + 10, height + 10);
     toggleFullWebcamBtn.mousePressed(() => {
-        if (canvas.isHidden) { canvas.show(); video1.hide();}
+        if (canvas.isHidden) { canvas.show(); video1.hide(); }
         else { canvas.hide(); video1.size(w, h); video1.show(); }
         canvas.isHidden = !canvas.isHidden;
     });
@@ -59,12 +74,11 @@ function setup() {
     player1 = new Player(new Face(0), "red", video1, playerZoneWidth / 2, height / 2);
     player2 = new Player(new Face(1), "blue", video2, width - playerZoneWidth / 2, height / 2);
 
-    
+
 }
 
 function draw() {
     background(0);
-
 
     // let lineCount = 0;
     // let emojiW = 20;
@@ -76,13 +90,28 @@ function draw() {
     //     }
     // }
 
+    if (showWebcam) {
+        let heightRatio = height / defaultWebcamH;
+        video1.size(defaultWebcamW * heightRatio, height);
+        push();
+        translate(video1.width / 2 + width / 2, 0);
+        scale(-1, 1);
+        image(video1, 0, 0);
+        pop();
+
+        push();
+        translate(500);
+        pop();
+        return;
+    }
+
     push();
     stroke(255);
     strokeWeight(3);
     // drawingContext.setLineDash([height/40, height/40])
-    line(width/2, 0, width/2, height);
+    line(width / 2, 0, width / 2, height);
     pop();
-    
+
 
     push();
     rectMode(CORNER);
@@ -102,9 +131,6 @@ function draw() {
     text(p1Score, width / 2 - playerZoneWidth / 2, height / 8);
     text(p2Score, width / 2 + playerZoneWidth / 2, height / 8);
 
-
-
-
     if (ball) ball.draw();
 }
 
@@ -119,6 +145,7 @@ function gotFaces(results, faceIx) {
 }
 
 function calibrate() {
+    showWebcam = false;
     player1.calibrate();
     player2.calibrate();
 }
@@ -138,6 +165,9 @@ class Player {
         this.noseY = null;
         this.lastX = null;
         this.lastY = null;
+
+        this.hasSunglasses = false;
+        this.hasSadEyes = false;
     }
 
     draw() {
@@ -146,6 +176,7 @@ class Player {
         translate(this.video.width + this.tx, this.ty);
         scale(-1, 1);
         image(this.video, 0, 0);
+        // identifyKeypoints();
         pop();
 
         let nose = this.face.nose();
@@ -169,10 +200,30 @@ class Player {
         if (this.lastY) this.noseY = lerp(this.lastY, this.noseY, paddleLerp);
 
         rect(this.noseX, this.noseY, paddleW, paddleH);
-
-        // this.lastX = this.noseX;
-        // this.lastY = this.noseY;
         pop();
+
+        if (this.hasSunglasses) {
+            push();
+            imageMode(CENTER);
+            let face = this.face.face();
+            let x = this.tx + face.faceOval.centerX;
+            let y = this.ty + (face.leftEye.centerY + face.rightEye.centerY) / 2;
+            let sunglassesW = face.keypoints[356].x - face.keypoints[93].x;
+            let sunglassesH = face.keypoints[5].y - face.keypoints[151].y;
+            image(sunglasses, x, y, sunglassesW, sunglassesH);
+            pop();
+        }
+        else if (this.hasSadEyes) {
+            push();
+            imageMode(CENTER);
+            let face = this.face.face();
+            let x = this.noseX;
+            let y = this.ty + (face.leftEye.centerY + face.rightEye.centerY) / 2;
+            let eyesW = face.faceOval.width * 0.91;
+            let eyesH = face.keypoints[1].y - face.keypoints[151].y;
+            image(sadEyes, x, y, eyesW, eyesH);
+            pop();
+        }
     }
 
     calibrate() {
@@ -182,7 +233,7 @@ class Player {
 
     scale() {
         let faceOval = this.face.faceOval();
-        let faceScale = (height * .9) / faceOval.height;
+        let faceScale = (height * 0.9) / faceOval.height;
         this.video.size(this.video.width * faceScale, this.video.height * faceScale);
         // console.log(`color: ${this.color}, faceIx: ${this.face.faceIx}, faceHeight: ${faceOval.height}, scale: ${faceScale}`);
     }
@@ -224,13 +275,17 @@ class Ball {
 
     draw() {
 
-        if (ball.x > width + ball.d) {   
+        if (ball.x > width + ball.d) {
             p1Score++;
+            player1.hasSunglasses = true;
+            player2.hasSadEyes = true;
             ball = null;
             return;
         }
         else if (ball.x < 0 - ball.d) {
             p2Score++;
+            player1.hasSadEyes = true;
+            player2.hasSunglasses = true;
             ball = null;
             return;
         }
@@ -267,7 +322,6 @@ class Ball {
             this.xSpeed = constrain(this.xSpeed + xDelta, 2, 7);
         this.xSpeed = constrain(this.xSpeed + xDelta, -7, 7);
         this.ySpeed = constrain(this.ySpeed + yDelta, -9, 9);
-
     }
 }
 
@@ -278,7 +332,6 @@ class Face {
 
     face() {
         return faces[this.faceIx];
-        
     }
 
     nose() {
@@ -295,11 +348,12 @@ class Face {
 }
 
 
-// function identifyKeypoints() {
-//     textSize(8);
-//     let face = faces[0];
-//     for (let i = 0; i < face.keypoints.length; i++) {
-//         let keypoint = face.keypoints[i];
-//         text(i, keypoint.x, keypoint.y);
-//     }
-// }
+function identifyKeypoints(offset = 0) {
+    textSize(8);
+    let face = faces[0];
+    if (!face) return;
+    for (let i = 0; i < face.keypoints.length; i++) {
+        let keypoint = face.keypoints[i];
+        text(i, keypoint.x + offset, keypoint.y);
+    }
+}
