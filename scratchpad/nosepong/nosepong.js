@@ -14,7 +14,7 @@ let now = 0;
 let elapsed;
 let buttons = [];
 
-let debug = true;
+let debug = false;
 let paddleW = 40;
 let paddleH = 60;
 let canvasWidth = 800;
@@ -66,28 +66,13 @@ function setup() {
     faceMesh1.detectStart(video1, (results) => { gotFaces(results, 0); });
     faceMesh2.detectStart(video2, (results) => { gotFaces(results, 1); });
 
-    calibrateBtn = createButton('calibrate');
-    calibrateBtn.position(10, height + 10);
-    calibrateBtn.mousePressed(calibrate);
-
-    ballBtn = createButton('new ball');
-    ballBtn.position(calibrateBtn.x + calibrateBtn.width + 10, height + 10);
-    ballBtn.mousePressed(() => { ball = new Ball(); });
-
-    toggleFullWebcamBtn = createButton('toggle full webcam view');
-    toggleFullWebcamBtn.position(ballBtn.x + ballBtn.width + 10, height + 10);
-    toggleFullWebcamBtn.mousePressed(() => {
-        if (canvas.isHidden) { canvas.show(); video1.hide(); }
-        else { canvas.hide(); video1.size(w, h); video1.show(); }
-        canvas.isHidden = !canvas.isHidden;
-    });
-
-    buttons.push(...[calibrateBtn, ballBtn, toggleFullWebcamBtn]);
 
     player1 = new Player(new Face(0), PlayerColor.RED, video1, playerZoneWidth / 2, height / 2);
     player2 = new Player(new Face(1), PlayerColor.BLUE, video2, width - playerZoneWidth / 2, height / 2);
 
     currentState = GameState.ATTRACT;
+
+    if (debug) makeDebugButtons();
 
     // showWebcam = true;
 
@@ -95,6 +80,8 @@ function setup() {
 
 function draw() {
     background(0);
+
+    if (checkShowWebcam()) return;
 
     detectPlayers();
 
@@ -107,20 +94,7 @@ function draw() {
             return;
     }
 
-    // if (showWebcam) {
-    //     let heightRatio = height / defaultWebcamHeight;
-    //     video1.size(defaultWebcamWidth * heightRatio, height);
-    //     push();
-    //     translate(video1.width / 2 + width / 2, 0);
-    //     scale(-1, 1);
-    //     image(video1, 0, 0);
-    //     pop();
 
-    //     push();
-    //     translate(500);
-    //     pop();
-    //     return;
-    // }
 
 
 }
@@ -362,8 +336,45 @@ function resetGame() {
     canPlayTs = now;
 }
 
+function makeDebugButtons() {
+    calibrateBtn = createButton('calibrate');
+    calibrateBtn.position(10, height + 10);
+    calibrateBtn.mousePressed(calibrate);
+
+    ballBtn = createButton('new ball');
+    ballBtn.position(calibrateBtn.x + calibrateBtn.width + 10, height + 10);
+    ballBtn.mousePressed(() => { ball = new Ball(); });
+
+    toggleFullWebcamBtn = createButton('toggle full webcam view');
+    toggleFullWebcamBtn.position(ballBtn.x + ballBtn.width + 10, height + 10);
+    toggleFullWebcamBtn.mousePressed(() => {
+        if (canvas.isHidden) { canvas.show(); video1.hide(); }
+        else { canvas.hide(); video1.size(w, h); video1.show(); }
+        canvas.isHidden = !canvas.isHidden;
+    });
+
+    buttons.push(...[calibrateBtn, ballBtn, toggleFullWebcamBtn]);
+
+}
+
 function debugLog(msg) {
     if (debug) console.log(msg);
+}
+
+function checkShowWebcam() {
+    if (!showWebcam) return false;
+    let heightRatio = height / defaultWebcamHeight;
+    video1.size(defaultWebcamWidth * heightRatio, height);
+    push();
+    translate(video1.width / 2 + width / 2, 0);
+    scale(-1, 1);
+    image(video1, 0, 0);
+    pop();
+
+    push();
+    translate(500);
+    pop();
+    return true;
 }
 
 
