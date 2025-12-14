@@ -1,14 +1,22 @@
 
 class Ball {
     constructor() {
+        this.minXSpeed = width / (5 * frameRate());
+        this.maxXSpeed = width / (3 * frameRate());
+        this.maxYSpeed = height / (1 * frameRate());
+        this.xSpeedup = 1.02;
+
         this.x = width / 2;
         this.y = height / 2;
-        this.xSpeed = random(1) > 0.5 ? random(3, 5) : random(-3, -5);
-        this.ySpeed = random(-3, 3);
+
+        let xMult = random(1) > 0.5 ? 1 : -1;
+
+        this.xSpeed = random(this.minXSpeed, this.maxXSpeed) * xMult;
+        this.ySpeed = random(-this.maxYSpeed, this.maxYSpeed) * 0.25;
         this.color = this.xSpeed > 0 ? PlayerColor.RED : PlayerColor.BLUE;
         this.lastCollidedWith = null;
 
-        this.d = 20;
+        this.d = paddleH * 0.333;
         this.xDamp = 0.7;
 
         ballUpdateTs = now;
@@ -28,7 +36,7 @@ class Ball {
         this.y += this.ySpeed;
 
 
-        if (this.y <= 0 || height <= this.y) {
+        if (this.y <= this.d / 2 || height - this.d / 2 <= this.y) {
             this.ySpeed *= -1;
             this.lastCollidedWith = null;
         }
@@ -48,51 +56,53 @@ class Ball {
         };
 
         let didCollide = false;
+        
+        let xDelta, yDelta;
 
         if (collideLineCircle(bounds.xMin, bounds.yMin, bounds.xMin, bounds.yMax, this.x, this.y, this.d)) {
             debugLog(`${player.color} left`);
-            this.xSpeed = -abs(this.xSpeed) * this.xDamp;
+            this.xSpeed = -abs(this.xSpeed) * this.xDamp + player.xVel();
+            this.ySpeed += player.yVel();
             didCollide = true;
-        }
+        }    
         else if (collideLineCircle(bounds.xMax, bounds.yMin, bounds.xMax, bounds.yMax, this.x, this.y, this.d)) {
             debugLog(`${player.color} right`);
-            this.xSpeed = abs(this.xSpeed) * this.xDamp;
+            this.xSpeed = abs(this.xSpeed) * this.xDamp * this.xDamp + player.xVel();
+            this.ySpeed += player.yVel();
             didCollide = true;
-        }
+        }    
         else if (collideLineCircle(bounds.xMin, bounds.yMin, bounds.xMax, bounds.yMin, this.x, this.y, this.d)) {
             debugLog(`${player.color} top`);
-            this.ySpeed = -abs(this.ySpeed);
+            this.ySpeed = -abs(this.ySpeed) + min(0, player.yVel());
+            this.xSpeed += player.xVel() * 0.2;
             didCollide = true;
-        }
+        }    
         else if (collideLineCircle(bounds.xMin, bounds.yMax, bounds.xMax, bounds.yMax, this.x, this.y, this.d)) {
             debugLog(`${player.color} bottom`);
-            this.ySpeed = abs(this.ySpeed);
+            this.ySpeed = abs(this.ySpeed) + max(0, player.yVel());
+            this.xSpeed += player.xVel() * 0.2;
             didCollide = true;
-        }
+        }    
         // general collision, in case paddle is moving really really fast
         else if (collideRectCircle(bounds.xMin, bounds.yMin, paddleW, paddleH, this.x, this.y, this.d)) {
             debugLog(`${player.color} rect`);
-            if (player.color == PlayerColor.RED) this.xSpeed = abs(this.xSpeed) * this.xDamp;
-            else this.xSpeed = -abs(this.xSpeed) * this.xDamp;
+            if (player.color == PlayerColor.RED) this.xSpeed = abs(this.xSpeed) * this.xDamp + player.xVel();
+            else this.xSpeed = -abs(this.xSpeed) * this.xDamp + player.xVel();
+            this.ySpeed += player.yVel();
             didCollide = true;
-        }
-
-        let xDelta, yDelta;
+        }    
 
         if (didCollide) {
-            xDelta = player.xVel();
-            yDelta = player.yVel();
+            this.minXSpeed *= this.xSpeedup;
+            this.maxXSpeed *= this.xSpeedup;
             this.color = player.color;
             this.lastCollidedWith = player.color;
-        } else {
-            xDelta = 0;
-            yDelta = 0;
         }
 
         if (this.xSpeed < 0)
-            this.xSpeed = constrain(this.xSpeed + xDelta, -8, -2);
+            this.xSpeed = constrain(this.xSpeed, -this.maxXSpeed, -this.minXSpeed);
         else
-            this.xSpeed = constrain(this.xSpeed + xDelta, 2, 8);
-        this.ySpeed = constrain(this.ySpeed + yDelta, -9, 9);
+            this.xSpeed = constrain(this.xSpeed, this.minXSpeed, this.maxXSpeed);
+        this.ySpeed = constrain(this.ySpeed, -this.maxYSpeed, this.maxYSpeed);
     }
 }

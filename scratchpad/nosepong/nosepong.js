@@ -8,20 +8,22 @@ let currentState;
 let ball = null;
 let ballUpdateTs = 0;
 let numPlayersDetected = 0;
+let paddleW, paddleH;
 let canPlay = false;
 let canPlayTs = 0;
 let now = 0;
 let elapsed;
 let buttons = [];
+let playerZoneWidth;
 
-let debug = false;
-let paddleW = 40;
-let paddleH = 60;
-let canvasWidth = 800;
-let canvasHeight = 400;
-let playerZoneWidth = canvasWidth / 5;
+let debug = true;
+let paddleHeightRatio = 0.1;
+let paddleShapeRatio = 0.5;
+let canvasWidth = null; //1280;
+let canvasHeight = null; //800;
+let playerZoneWidthRatio = 0.25;
 let paddleLerp = 0.4;
-let targetScore = 2;
+let targetScore = 100;
 
 let faces = [null, null];
 
@@ -59,9 +61,16 @@ function preload() {
 }
 
 function setup() {
-    let canvas = createCanvas(canvasWidth, canvasHeight);
+    let w = canvasWidth ? canvasWidth : displayWidth;
+    let h = canvasHeight ? canvasHeight : displayHeight;
+
+    let canvas = createCanvas(w, h);
     canvas.isHidden = false;
 
+    playerZoneWidth = width * playerZoneWidthRatio;
+
+    paddleH = height * paddleHeightRatio;
+    paddleW = paddleH * paddleShapeRatio;
 
     faceMesh1.detectStart(video1, (results) => { gotFaces(results, 0); });
     faceMesh2.detectStart(video2, (results) => { gotFaces(results, 1); });
@@ -88,14 +97,11 @@ function draw() {
     switch (currentState) {
         case GameState.ATTRACT:
             drawAttract();
-            return;
+            break;
         case GameState.PLAY:
             drawPlay();
-            return;
+            break;
     }
-
-
-
 
 }
 
@@ -116,8 +122,8 @@ function drawAttract() {
     let canvasAspectRatio = width / height;
     let videoAspectRatio = video1.width / video1.height;
 
-    let x = width / 2;
-    let y = height / 2;
+    let x = 0
+    let y = 0;
     let w, h;
 
     if (videoAspectRatio > canvasAspectRatio) {
@@ -133,10 +139,10 @@ function drawAttract() {
 
     let msg = '';
 
-    const holdMs = debug ? 200 : 2000;
-    const countdownSeconds = debug ? 2 : 5;
+    const holdMs = debug ? 100 : 2000;
+    const countdownSeconds = debug ? 1 : 5;
     const countdownMs = countdownSeconds * 1000;
-    const welcomeMs = debug ? 1000 : 5000;
+    const welcomeMs = debug ? 500 : 5000;
 
     if (!canPlay || (canPlay && consume(holdMs)))
         msg = `PLAYERS DETECTED: ${numPlayersDetected}`;
@@ -158,10 +164,12 @@ function drawAttract() {
 
 
     push();
-    imageMode(CENTER);
+    imageMode(CORNER);
 
     push();
-    translate(w * 3 / 2, 0);
+    translate(w + (width-w)/2, 0);
+    // translate(width / 2 + 2 * (width - w), 0);
+    // translate((width/ 2)  + (2 * width) - (2 * w) );
     scale(-1, 1);
     image(video1, x, y, w, h);
     pop();
@@ -237,13 +245,13 @@ function drawPlay() {
                     drawPlay.state = {
                         substate: PlaySubstate.GAMEOVER,
                         stateChangedAt: now,
-                        stateDuration: 3000
+                        stateDuration: debug ? 1000 : 3000
                     }
                 } else {
                     drawPlay.state = {
                         substate: PlaySubstate.SCORE,
                         stateChangedAt: now,
-                        stateDuration: 3000
+                        stateDuration: debug ? 1000: 3000
                     }
                 }
             }
@@ -299,16 +307,17 @@ function calibrate() {
     showWebcam = false;
     player1.scale();
     player2.scale();
+    let timeoutLen = 500;
     setTimeout(() => {
         player1.translate();
         player2.translate();
         currentState = GameState.PLAY;
         drawPlay.state = {
             substate: PlaySubstate.GETREADY,
-            stateChangedAt: now + 500,
-            stateDuration: 1000,
+            stateChangedAt: now + timeoutLen,
+            stateDuration: debug ? 100 : 1000,
         }
-    }, 500);
+    }, timeoutLen);
 }
 
 function identifyKeypoints(offset = 0) {
@@ -377,8 +386,12 @@ function checkShowWebcam() {
     return true;
 }
 
-
-
+function mousePressed() {
+    if (mouseX > 0 && mouseX < width && mouseY > 0 && mouseY < height) {
+        let fs = fullscreen();
+        fullscreen(!fs);
+    }
+}
 // let lineCount = 0;
 // let emojiW = 20;
 // for (let y = 0; y < height; y += height / 37) {

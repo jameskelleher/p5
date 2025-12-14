@@ -37,8 +37,11 @@ class Player {
         translate(this.video.width + this.tx, this.ty);
         scale(-1, 1);
         image(this.video, 0, 0);
-        // identifyKeypoints();
         pop();
+        // push();
+        // translate(this.tx, this.ty);
+        // identifyKeypoints();
+        // pop();
 
         let nose = this.face.nose();
         if (nose) {
@@ -70,6 +73,8 @@ class Player {
         let faceOval = this.face.faceOval();
 
         if (!face || !faceOval) { pop(); return; }
+
+        console.log((face.keypoints[14].y - face.keypoints[13].y)/height);
 
         if (this.hasSunglasses) {
             let x = this.tx + faceOval.centerX;
