@@ -83,9 +83,13 @@ function setup() {
 
     if (debug) makeDebugButtons();
 
+
+
     // showWebcam = true;
 
 }
+
+
 
 function draw() {
     background(0);
@@ -102,7 +106,6 @@ function draw() {
             drawPlay();
             break;
     }
-
 }
 
 function detectPlayers() {
@@ -119,6 +122,10 @@ function detectPlayers() {
 }
 
 function drawAttract() {
+    drawAttract.box = (drawAttract.box || new Nosebox(
+        10, width / 2, height / 5, 350, 150
+    ));
+
     let canvasAspectRatio = width / height;
     let videoAspectRatio = video1.width / video1.height;
 
@@ -167,9 +174,7 @@ function drawAttract() {
     imageMode(CORNER);
 
     push();
-    translate(w + (width-w)/2, 0);
-    // translate(width / 2 + 2 * (width - w), 0);
-    // translate((width/ 2)  + (2 * width) - (2 * w) );
+    translate(w + (width - w) / 2, 0);
     scale(-1, 1);
     image(video1, x, y, w, h);
     pop();
@@ -190,6 +195,8 @@ function drawAttract() {
     textStyle(ITALIC);
     text('"It\'s pong played with your nose"', width / 2, height * 7 / 8);
     pop();
+
+    drawAttract.box.draw();
 }
 
 function drawPlay() {
@@ -251,7 +258,7 @@ function drawPlay() {
                     drawPlay.state = {
                         substate: PlaySubstate.SCORE,
                         stateChangedAt: now,
-                        stateDuration: debug ? 1000: 3000
+                        stateDuration: debug ? 1000 : 3000
                     }
                 }
             }

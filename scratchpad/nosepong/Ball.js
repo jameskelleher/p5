@@ -1,4 +1,3 @@
-
 class Ball {
     constructor() {
         this.minXSpeed = width / (4 * frameRate());
