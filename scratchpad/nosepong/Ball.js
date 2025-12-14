@@ -1,8 +1,8 @@
 
 class Ball {
     constructor() {
-        this.minXSpeed = width / (5 * frameRate());
-        this.maxXSpeed = width / (3 * frameRate());
+        this.minXSpeed = width / (4 * frameRate());
+        this.maxXSpeed = width / (2.5 * frameRate());
         this.maxYSpeed = height / (1 * frameRate());
         this.xSpeedup = 1.02;
 
@@ -49,16 +49,14 @@ class Ball {
         if (this.lastCollidedWith == player.color) return;
 
         let bounds = {
-            xMin: player.noseX - paddleW / 2,
-            xMax: player.noseX + paddleW / 2,
-            yMin: player.noseY - paddleH / 2,
-            yMax: player.noseY + paddleH / 2,
+            xMin: player.noseX - player.truePaddleWidth / 2,
+            xMax: player.noseX + player.truePaddleWidth / 2,
+            yMin: player.noseY - player.truePaddleHeight / 2,
+            yMax: player.noseY + player.truePaddleHeight / 2,
         };
 
         let didCollide = false;
         
-        let xDelta, yDelta;
-
         if (collideLineCircle(bounds.xMin, bounds.yMin, bounds.xMin, bounds.yMax, this.x, this.y, this.d)) {
             debugLog(`${player.color} left`);
             this.xSpeed = -abs(this.xSpeed) * this.xDamp + player.xVel();
@@ -84,7 +82,7 @@ class Ball {
             didCollide = true;
         }    
         // general collision, in case paddle is moving really really fast
-        else if (collideRectCircle(bounds.xMin, bounds.yMin, paddleW, paddleH, this.x, this.y, this.d)) {
+        else if (collideRectCircle(bounds.xMin, bounds.yMin, player.truePaddleWidth, player.truePaddleHeight, this.x, this.y, this.d)) {
             debugLog(`${player.color} rect`);
             if (player.color == PlayerColor.RED) this.xSpeed = abs(this.xSpeed) * this.xDamp + player.xVel();
             else this.xSpeed = -abs(this.xSpeed) * this.xDamp + player.xVel();

@@ -17,6 +17,10 @@ class Player {
         this.lastX = null;
         this.lastY = null;
 
+        this.sizeMult = 1;
+        this.truePaddleWidth = paddleW;
+        this.truePaddleHeight = paddleH;
+
         this.hasSunglasses = false;
         this.hasSadEyes = false;
 
@@ -43,18 +47,21 @@ class Player {
         // identifyKeypoints();
         // pop();
 
+        this.truePaddleWidth = paddleW * this.sizeMult;
+        this.truePaddleHeight = paddleH * this.sizeMult;
+
         let nose = this.face.nose();
         if (nose) {
             this.lastX = this.noseX;
             this.lastY = this.noseY;
 
-            let xLo = this.centerX - playerZoneWidth / 2 + paddleW / 2;
-            let xHi = this.centerX + playerZoneWidth / 2 - paddleW / 2;
+            let xLo = this.centerX - playerZoneWidth / 2 + this.truePaddleWidth / 2;
+            let xHi = this.centerX + playerZoneWidth / 2 - this.truePaddleWidth / 2;
             this.noseX = constrain(this.tx + nose.x, xLo, xHi);
             if (this.lastX) this.noseX = lerp(this.lastX, this.noseX, paddleLerp);
 
-            let yLo = paddleH / 2;
-            let yHi = height - paddleH / 2;
+            let yLo = this.truePaddleHeight / 2;
+            let yHi = height - this.truePaddleHeight / 2;
             this.noseY = constrain(this.ty + nose.y, yLo, yHi);
             if (this.lastY) this.noseY = lerp(this.lastY, this.noseY, paddleLerp);
         }
@@ -66,7 +73,7 @@ class Player {
         push();
         rectMode(CENTER);
         fill(this.color);
-        rect(this.noseX, this.noseY, paddleW, paddleH);
+        rect(this.noseX, this.noseY, this.truePaddleWidth, this.truePaddleHeight);
         pop();
 
         let face = this.face.face();
@@ -74,7 +81,8 @@ class Player {
 
         if (!face || !faceOval) { pop(); return; }
 
-        console.log((face.keypoints[14].y - face.keypoints[13].y)/height);
+        let mouthSizeRatio = (face.keypoints[14].y - face.keypoints[13].y)/height
+        this.sizeMult = map(mouthSizeRatio, 0, 0.2, 1, 1.3)
 
         if (this.hasSunglasses) {
             let x = this.tx + faceOval.centerX;
@@ -114,11 +122,6 @@ class Player {
         this.ty = this.centerY - nose.y - 30;
     }
 
-    isCollidingWith(ball) {
-        let isXBound = this.noseX - paddleW / 2 <= ball.x && ball.x <= this.noseX + paddleW / 2;
-        let isYBound = this.noseY - paddleH / 2 <= ball.y && ball.y <= this.noseY + paddleH / 2;
-        return isXBound && isYBound;
-    }
 
     xVel() {
         return this.noseX - this.lastX;
