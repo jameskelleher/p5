@@ -3,7 +3,7 @@ class Ball {
         this.minXSpeed = width / (4 * frameRate());
         this.maxXSpeed = width / (2.5 * frameRate());
         this.maxYSpeed = height / (1 * frameRate());
-        this.xSpeedup = 1.02;
+        this.xSpeedup = 1.03;
 
         this.x = width / 2;
         this.y = height / 2;
