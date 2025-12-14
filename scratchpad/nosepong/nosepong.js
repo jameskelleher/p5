@@ -3,7 +3,7 @@ let faceMesh1, faceMesh2;
 let vidW, vidH;
 let player1, player2, winner;
 let defaultWebcamWidth, defaultWebcamHeight, showWebcam;
-let sunglasses, sadEyes;
+let sunglasses, sadEyes, carhorn, goose, clown;
 let currentState;
 let ball = null;
 let ballUpdateTs = 0;
@@ -45,7 +45,7 @@ const PlaySubstate = Object.freeze({
     GETREADY: Symbol('getready'),
     SCORE: Symbol('score'),
     GAMEOVER: Symbol('gameover')
-})
+});
 
 function preload() {
     faceMesh1 = ml5.faceMesh({ maxFaces: 2, flipped: true });
@@ -58,6 +58,10 @@ function preload() {
 
     sunglasses = loadImage('media/sunglasses.png');
     sadEyes = loadImage('media/sadAnimeEyes.png');
+
+    carhorn = loadSound('media/carhorn.mp3');
+    goose = loadSound('media/goose.mp3');
+    clown = loadSound('media/clown.mp3');
 }
 
 function setup() {
@@ -129,7 +133,7 @@ function drawAttract() {
     let canvasAspectRatio = width / height;
     let videoAspectRatio = video1.width / video1.height;
 
-    let x = 0
+    let x = 0;
     let y = 0;
     let w, h;
 
@@ -180,12 +184,12 @@ function drawAttract() {
     pop();
 
     strokeJoin(ROUND);
-    stroke('black')
+    stroke('black');
     strokeWeight(5);
     fill('white');
     textSize(48);
     textAlign(CENTER);
-    text('NOSEPONG', width / 2, height / 5)
+    text('NOSEPONG', width / 2, height / 5);
     textSize(30);
     strokeWeight(5);
     textStyle(BOLD);
@@ -222,7 +226,7 @@ function drawPlay() {
     text(player1.score, width / 2 - playerZoneWidth / 2, height / 8);
     text(player2.score, width / 2 + playerZoneWidth / 2, height / 8);
 
-    let msg = ''
+    let msg = '';
     let elapsedTime = now - drawPlay.state.stateChangedAt;
 
     switch (drawPlay.state.substate) {
@@ -253,13 +257,13 @@ function drawPlay() {
                         substate: PlaySubstate.GAMEOVER,
                         stateChangedAt: now,
                         stateDuration: debug ? 1000 : 3000
-                    }
+                    };
                 } else {
                     drawPlay.state = {
                         substate: PlaySubstate.SCORE,
                         stateChangedAt: now,
                         stateDuration: debug ? 1000 : 3000
-                    }
+                    };
                 }
             }
             break;
@@ -270,27 +274,27 @@ function drawPlay() {
                     substate: PlaySubstate.PLAY,
                     stateChangedAt: now,
                     stateDuration: null
-                }
+                };
             }
-            else msg = 'GET READY!'
+            else msg = 'GET READY!';
             break;
         case PlaySubstate.SCORE:
             if (elapsedTime > drawPlay.state.stateDuration) {
-                ball = null
+                ball = null;
                 player1.resetCosmetics();
                 player2.resetCosmetics();
                 drawPlay.state = {
                     substate: PlaySubstate.GETREADY,
                     stateChangedAt: now,
                     stateDuration: 2000
-                }
+                };
             }
-            else msg = `${winner.color.toUpperCase()} SCORED!`
+            else msg = `${winner.color.toUpperCase()} SCORED!`;
             break;
         case PlaySubstate.GAMEOVER:
             if (elapsedTime > drawPlay.state.stateDuration)
                 resetGame();
-            else msg = `${winner.color.toUpperCase()} WINS!\nTHEIR NOSE KNOWS!`
+            else msg = `${winner.color.toUpperCase()} WINS!\nTHEIR NOSE KNOWS!`;
     }
     text(msg, width / 2, height / 2);
 }
@@ -323,7 +327,7 @@ function calibrate() {
             substate: PlaySubstate.GETREADY,
             stateChangedAt: now + timeoutLen,
             stateDuration: debug ? 100 : 1000,
-        }
+        };
     }, timeoutLen);
 }
 
@@ -347,7 +351,7 @@ function resetGame() {
     player1.reset();
     player2.reset();
     winner = null;
-    currentState = GameState.ATTRACT
+    currentState = GameState.ATTRACT;
     canPlay = false;
     canPlayTs = now;
 }
