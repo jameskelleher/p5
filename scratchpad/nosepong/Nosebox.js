@@ -15,6 +15,8 @@ class Nosebox {
         this.rotation = 0;
         this.rotIncr = 0.01;
         this.maxRot = PI / 8;
+        
+        this.char = noseEmoji;
 
         for (let i = 0; i < numNoses; i++) {
             this.positions.push(this.perimeter * i / this.numNoses)
@@ -60,8 +62,11 @@ class Nosebox {
             textAlign(CENTER);
             translate(x, y);
             rotate(this.rotation);
-            text(noseEmoji, 0, 0);
+            text(this.char, 0, 0);
             pop();
+
+            if (this.char == noseEmoji) this.char = pigNoseEmoji;
+            else this.char = noseEmoji;
         });
     }
 }

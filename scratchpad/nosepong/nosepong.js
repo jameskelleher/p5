@@ -16,18 +16,19 @@ let elapsed;
 let buttons = [];
 let playerZoneWidth;
 
-let debug = true;
+let debug = false;
 let paddleHeightRatio = 0.1;
 let paddleShapeRatio = 0.5;
 let canvasWidth = null; //1280;
 let canvasHeight = null; //800;
 let playerZoneWidthRatio = 0.25;
 let paddleLerp = 0.4;
-let targetScore = 100;
+let targetScore = 5;
 
 let faces = [null, null];
 
 let noseEmoji = '👃';
+let pigNoseEmoji = '🐽';
 
 const PlayerColor = Object.freeze({
     RED: 'red',
@@ -127,7 +128,7 @@ function detectPlayers() {
 
 function drawAttract() {
     drawAttract.box = (drawAttract.box || new Nosebox(
-        10, width / 2, height / 5, 350, 150
+        20, width / 2, height / 5 - 20, 660, 170
     ));
 
     let canvasAspectRatio = width / height;
@@ -151,12 +152,13 @@ function drawAttract() {
     let msg = '';
 
     const holdMs = debug ? 100 : 2000;
-    const countdownSeconds = debug ? 1 : 5;
+    const countdownSeconds = debug ? 1 : 3;
     const countdownMs = countdownSeconds * 1000;
-    const welcomeMs = debug ? 500 : 5000;
+    const welcomeMs = debug ? 500 : 4000;
 
     if (!canPlay || (canPlay && consume(holdMs)))
-        msg = `PLAYERS DETECTED: ${numPlayersDetected}`;
+        // msg = `PLAYERS DETECTED: ${numPlayersDetected}`;
+        msg = "WAITING FOR PLAYERS\nWANT TO JOIN?\nTAKE A SEAT AND GET COMFORTABLE";
     else if (consume(countdownMs)) {
         let remaining = countdownSeconds - Math.floor((elapsed) / 1000);
         msg = `GAME STARTING IN: ${remaining}`;
@@ -187,10 +189,10 @@ function drawAttract() {
     stroke('black');
     strokeWeight(5);
     fill('white');
-    textSize(48);
+    textSize(100);
     textAlign(CENTER);
     text('NOSEPONG', width / 2, height / 5);
-    textSize(30);
+    textSize(40);
     strokeWeight(5);
     textStyle(BOLD);
     text(msg, width / 2, height / 2);
@@ -221,14 +223,31 @@ function drawPlay() {
     player2.draw();
 
     textAlign(CENTER);
-    textSize(48);
+    textSize(64);
     fill(255);
+
+    let hsbValue = (frameCount * 5) % 255;
+
+    push();
+    if (player1.score >= targetScore - 1) {
+        colorMode(HSB);
+        fill(hsbValue, 100, 100);
+    }
     text(player1.score, width / 2 - playerZoneWidth / 2, height / 8);
+    pop();
+
+    push();
+    if (player2.score >= targetScore - 1) {
+        colorMode(HSB);
+        fill(hsbValue, 100, 100);
+    }
     text(player2.score, width / 2 + playerZoneWidth / 2, height / 8);
+    pop();
 
     let msg = '';
     let elapsedTime = now - drawPlay.state.stateChangedAt;
 
+    push();
     switch (drawPlay.state.substate) {
         case PlaySubstate.PLAY:
             let scored = false;
@@ -294,9 +313,13 @@ function drawPlay() {
         case PlaySubstate.GAMEOVER:
             if (elapsedTime > drawPlay.state.stateDuration)
                 resetGame();
-            else msg = `${winner.color.toUpperCase()} WINS!\nTHEIR NOSE KNOWS!`;
+            else {
+                fill(winner.color);
+                msg = `${winner.color.toUpperCase()} WINS!\nTHEIR NOSE KNOWS!`;
+            }
     }
     text(msg, width / 2, height / 2);
+    pop();
 }
 
 
