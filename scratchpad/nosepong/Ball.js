@@ -1,7 +1,7 @@
 class Ball {
     constructor() {
         this.minXSpeed = width / (4 * frameRate());
-        this.maxXSpeed = width / (2.5 * frameRate());
+        this.maxXSpeed = width / (1.5 * frameRate());
         this.maxYSpeed = height / (1 * frameRate());
         this.xSpeedup = 1.03;
 
@@ -10,7 +10,7 @@ class Ball {
 
         let xMult = random(1) > 0.5 ? 1 : -1;
 
-        this.xSpeed = random(this.minXSpeed, this.maxXSpeed) * xMult;
+        this.xSpeed = random(this.minXSpeed, this.maxXSpeed * 0.5) * xMult;
         this.ySpeed = random(-this.maxYSpeed, this.maxYSpeed) * 0.25;
         this.color = this.xSpeed > 0 ? PlayerColor.RED : PlayerColor.BLUE;
         this.lastCollidedWith = null;
@@ -26,6 +26,12 @@ class Ball {
         player2.hasSadEyes = false;
     }
 
+    bounceSound() {
+        let rate = random(0.75, 1.25);
+        goose.rate(rate);
+        goose.play();
+    }
+
     draw() {
 
         fill(this.color);
@@ -38,6 +44,7 @@ class Ball {
         if (this.y <= this.d / 2 || height - this.d / 2 <= this.y) {
             this.ySpeed *= -1;
             this.lastCollidedWith = null;
+            this.bounceSound();
         }
 
         this.checkCollisions(player1);
@@ -94,6 +101,7 @@ class Ball {
             this.maxXSpeed *= this.xSpeedup;
             this.color = player.color;
             this.lastCollidedWith = player.color;
+            this.bounceSound();
         }
 
         if (this.xSpeed < 0)

@@ -158,7 +158,7 @@ function drawAttract() {
 
     if (!canPlay || (canPlay && consume(holdMs)))
         // msg = `PLAYERS DETECTED: ${numPlayersDetected}`;
-        msg = "WAITING FOR PLAYERS\nWANT TO JOIN?\nTAKE A SEAT AND GET COMFORTABLE";
+        msg = "A GAME FOR TWO\nPLAYERS WELCOME\nTAKE A SEAT TO JOIN";
     else if (consume(countdownMs)) {
         let remaining = countdownSeconds - Math.floor((elapsed) / 1000);
         msg = `GAME STARTING IN: ${remaining}`;
